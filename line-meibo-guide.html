@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE名簿のしくみガイド | 関ヶ谷自治会DX委員向け</title>
+    <style>
+        :root {
+            --green: #1DB446;
+            --green-light: #f0faf3;
+            --orange: #E08D3C;
+            --orange-light: #FFF8F0;
+            --red: #e53935;
+            --gray-dark: #333;
+            --gray: #555;
+            --gray-light: #888;
+            --gray-bg: #f4f7f6;
+            --border: #e0e0e0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", -apple-system, sans-serif;
+            background: var(--gray-bg);
+            color: var(--gray-dark);
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        /* ヘッダー */
+        .header {
+            background: var(--green);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 22px; font-weight: bold; margin-bottom: 6px; }
+        .header p { font-size: 13px; opacity: 0.85; }
+
+        /* メインコンテンツ */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 16px 60px;
+        }
+
+        /* 目次 */
+        .toc {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .toc h2 { font-size: 15px; color: var(--green); margin-bottom: 10px; }
+        .toc ol { padding-left: 20px; }
+        .toc li { margin-bottom: 4px; }
+        .toc a { color: var(--green); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+
+        /* セクション */
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .section h2 {
+            font-size: 18px;
+            color: var(--green);
+            border-left: 4px solid var(--green);
+            padding-left: 12px;
+            margin-bottom: 16px;
+        }
+        .section h3 {
+            font-size: 16px;
+            color: var(--gray-dark);
+            margin: 20px 0 10px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+        .section p { margin-bottom: 12px; color: var(--gray); }
+        .section strong { color: var(--gray-dark); }
+
+        /* テーブル */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 16px;
+            font-size: 14px;
+        }
+        thead th {
+            background: var(--green);
+            color: white;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        tbody td {
+            padding: 9px 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        tbody tr:nth-child(even) { background: #fafafa; }
+        tbody tr:hover { background: var(--green-light); }
+
+        /* フロー図（テキスト版） */
+        .flow-box {
+            background: var(--gray-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0 16px;
+            font-family: "Courier New", monospace;
+            font-size: 14px;
+            line-height: 2;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        /* === 全体連携図 === */
+        .arch-diagram {
+            margin: 16px 0 20px;
+            padding: 20px 16px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow-x: auto;
+        }
+        .arch-diagram h4 {
+            text-align: center;
+            font-size: 15px;
+            color: var(--gray-dark);
+            margin-bottom: 18px;
+        }
+        .arch-row {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        /* ノード */
+        .arch-node {
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            padding: 12px 16px;
+            text-align: center;
+            min-width: 130px;
+            max-width: 200px;
+            background: white;
+            position: relative;
+        }
+        .arch-node .node-icon { font-size: 24px; display: block; margin-bottom: 4px; }
+        .arch-node .node-title { font-size: 13px; font-weight: bold; display: block; }
+        .arch-node .node-sub { font-size: 11px; color: var(--gray-light); display: block; margin-top: 2px; }
+        /* カラー */
+        .arch-node.blue { border-color: #1565C0; background: #E3F2FD; }
+        .arch-node.blue .node-title { color: #1565C0; }
+        .arch-node.green { border-color: #2E7D32; background: #E8F5E9; }
+        .arch-node.green .node-title { color: #2E7D32; }
+        .arch-node.orange { border-color: #E65100; background: #FFF3E0; }
+        .arch-node.orange .node-title { color: #E65100; }
+        .arch-node.purple { border-color: #7B1FA2; background: #F3E5F5; }
+        .arch-node.purple .node-title { color: #7B1FA2; }
+        /* 矢印 */
+        .arch-arrow {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 4px 0;
+            gap: 8px;
+        }
+        .arch-arrow .arrow-line {
+            font-size: 18px;
+            color: #999;
+            line-height: 1;
+        }
+        .arch-arrow .arrow-label {
+            font-size: 11px;
+            color: var(--gray-light);
+            background: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            white-space: nowrap;
+        }
+        /* 横矢印（管理画面→住民） */
+        .arch-row-h {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin: 8px 0;
+            flex-wrap: wrap;
+        }
+        .arch-arrow-h {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .arch-arrow-h .arrow-line { font-size: 14px; color: #999; }
+        .arch-arrow-h .arrow-label {
+            font-size: 10px;
+            color: var(--gray-light);
+            background: white;
+            padding: 1px 6px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            white-space: nowrap;
+        }
+
+        /* グループ枠 */
+        .arch-group {
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 0 auto 8px;
+            max-width: 500px;
+        }
+        .arch-group-label {
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--gray-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .arch-group.blue-group { border-color: #90CAF9; background: rgba(227,242,253,0.3); }
+        .arch-group.green-group { border-color: #A5D6A7; background: rgba(232,245,233,0.3); }
+        .arch-group.orange-group { border-color: #FFCC80; background: rgba(255,243,224,0.3); }
+
+        /* ステータスバッジ */
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .badge-temp { background: #FFF3E0; color: #E65100; }
+        .badge-active { background: #E8F5E9; color: #2E7D32; }
+        .badge-reminded { background: #E3F2FD; color: #1565C0; }
+        .badge-blocked { background: #FFEBEE; color: #C62828; }
+
+        /* 注意ボックス */
+        .warn-box {
+            background: #FFF8E1;
+            border-left: 4px solid #FFA000;
+            padding: 14px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+        .warn-box li { margin-bottom: 6px; }
+        .warn-box ul { padding-left: 18px; }
+
+        /* Q&A */
+        .qa { margin: 12px 0; }
+        .qa dt {
+            font-weight: bold;
+            color: var(--green);
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        .qa dd {
+            margin: 0 0 14px 0;
+            padding-left: 16px;
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        /* トリガーカード */
+        .trigger-card {
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin: 12px 0;
+        }
+        .trigger-card.green { border-color: var(--green); }
+        .trigger-card.orange { border-color: var(--orange); }
+        .trigger-card h4 {
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+        .trigger-card.green h4 { color: var(--green); }
+        .trigger-card.orange h4 { color: var(--orange); }
+        .trigger-card p { font-size: 14px; margin-bottom: 6px; }
+
+        /* 用語 */
+        .term-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        .term-item {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            padding: 8px 12px;
+            background: var(--gray-bg);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .term-name {
+            font-weight: bold;
+            color: var(--green);
+            white-space: nowrap;
+            min-width: 100px;
+        }
+
+        /* エラーテーブル */
+        .error-table td:first-child { font-family: monospace; font-size: 13px; }
+
+        /* フッター */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: var(--gray-light);
+        }
+
+        /* ステップリスト */
+        .steps {
+            counter-reset: step;
+            padding: 0;
+            list-style: none;
+        }
+        .steps li {
+            counter-increment: step;
+            position: relative;
+            padding: 8px 0 8px 40px;
+            font-size: 14px;
+            color: var(--gray);
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .steps li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 26px;
+            height: 26px;
+            background: var(--green);
+            color: white;
+            border-radius: 50%;
+            font-size: 13px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 26px;
+        }
+
+        /* トグル */
+        details {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0;
+            margin: 10px 0;
+            background: #fafafa;
+        }
+        details summary {
+            padding: 12px 16px;
+            cursor: pointer;
+            font-size: 15px;
+            color: var(--green);
+            list-style: none;
+        }
+        details summary::-webkit-details-marker { display: none; }
+        details summary::before {
+            content: "▶ ";
+            font-size: 12px;
+            margin-right: 4px;
+        }
+        details[open] summary::before { content: "▼ "; }
+        details[open] summary {
+            border-bottom: 1px solid var(--border);
+        }
+        details > div {
+            padding: 4px 16px 12px;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 600px) {
+            .section { padding: 16px; }
+            table { font-size: 13px; }
+            thead th, tbody td { padding: 7px 8px; }
+            .header h1 { font-size: 19px; }
+        }
+
+        /* テーブル横スクロール */
+        .table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>LINE名簿のしくみガイド</h1>
+    <p>DX委員向け ｜ 最終更新: 2026-04-19</p>
+</div>
+
+<div class="container">
+
+    <!-- 目次 -->
+    <div class="toc">
+        <h2>もくじ</h2>
+        <ol>
+            <li><a href="#sec1">このスプレッドシートは何？</a></li>
+            <li><a href="#sec2">全体の仕組み（データの流れ）</a></li>
+            <li><a href="#sec3">名簿シートの列の意味</a></li>
+            <li><a href="#sec4">ステータス（E列）の意味</a></li>
+            <li><a href="#sec5">自動で動いている処理</a></li>
+            <li><a href="#sec6">住民がフォームで操作したときの動き</a></li>
+            <li><a href="#sec7">Refシート（参照用）</a></li>
+            <li><a href="#sec8">注意事項</a></li>
+            <li><a href="#sec9">エラー通知メールが届いたら</a></li>
+        </ol>
+        <p style="margin-top: 12px; font-size: 13px;"><a href="line-operations-guide.html">→ LINE運用ガイド（管理画面とGASの使い分け）はこちら</a></p>
+    </div>
+
+    <!-- まずこれだけ -->
+    <div class="section" style="border-left: 4px solid var(--green); background: var(--green-light);">
+        <h2 style="border-left: none; padding-left: 0;">まずこれだけ知っておけばOK</h2>
+        <ul style="font-size: 14px; color: var(--gray); padding-left: 18px;">
+            <li>このスプレッドシートには、<strong>LINE公式アカウントに登録した住民の情報</strong>が入っています</li>
+            <li>住民がLINEでフォームを送信すると、<strong>自動で書き込まれます</strong></li>
+            <li><strong>手動で編集する必要は基本的にありません</strong></li>
+            <li>E列の「ステータス」が最も重要。登録の進み具合を表しています（→<a href="#sec4">第4章</a>）</li>
+        </ul>
+    </div>
+
+    <!-- 1 -->
+    <div class="section" id="sec1">
+        <h2>1. このスプレッドシートは何？</h2>
+        <p>住民がLINEから登録フォームを開いて入力すると、その情報がこの名簿に<strong>自動で記録</strong>されます。</p>
+        <p>氏名、班番号、役職などの登録情報がすべてここに集まる仕組みです。</p>
+        <p><strong>手動で編集する必要は基本的にありません。</strong></p>
+    </div>
+
+    <!-- 2 -->
+    <div class="section" id="sec2">
+        <h2>2. 全体の仕組み（データの流れ）</h2>
+
+        <p>このシステムは、<strong>3つのサービス</strong>が連携して動いています。</p>
+
+        <!-- 全体連携図（CSS版） -->
+        <div class="arch-diagram">
+            <h4>自治会DXシステム 全体連携図</h4>
+
+            <!-- 住民のスマホ -->
+            <div class="arch-row">
+                <div class="arch-node blue">
+                    <span class="node-icon">📱</span>
+                    <span class="node-title">住民のスマホ（LINE）</span>
+                    <span class="node-sub">リッチメニューをタップ</span>
+                </div>
+            </div>
+
+            <div class="arch-arrow">
+                <span class="arrow-line">▼</span>
+                <span class="arrow-label">「利用登録」をタップ</span>
+            </div>
+
+            <!-- フロントエンド グループ -->
+            <div class="arch-group blue-group">
+                <div class="arch-group-label">フロントエンド（画面側）</div>
+                <div class="arch-row">
+                    <div class="arch-node blue">
+                        <span class="node-icon">📝</span>
+                        <span class="node-title">LIFFフォーム</span>
+                        <span class="node-sub">LINE内で開く入力画面</span>
+                    </div>
+                    <div class="arch-node blue">
+                        <span class="node-icon">🌐</span>
+                        <span class="node-title">GitHub Pages</span>
+                        <span class="node-sub">フォームの置き場所</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arch-arrow">
+                <span class="arrow-line">▼</span>
+                <span class="arrow-label">フォームデータを送信</span>
+            </div>
+
+            <!-- バックエンド グループ -->
+            <div class="arch-group green-group">
+                <div class="arch-group-label">バックエンド（自動処理）</div>
+                <div class="arch-row">
+                    <div class="arch-node green">
+                        <span class="node-icon">⚙️</span>
+                        <span class="node-title">GAS</span>
+                        <span class="node-sub">Google Apps Script<br>自動処理プログラム</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arch-arrow">
+                <span class="arrow-line">▼</span>
+                <span class="arrow-label">データを保存</span>
+            </div>
+
+            <!-- データベース グループ -->
+            <div class="arch-group orange-group">
+                <div class="arch-group-label">データベース（保管庫）</div>
+                <div class="arch-row">
+                    <div class="arch-node orange">
+                        <span class="node-icon">📊</span>
+                        <span class="node-title">スプレッドシート</span>
+                        <span class="node-sub">LINE_meibo（名簿）</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arch-arrow">
+                <span class="arrow-line">▼</span>
+                <span class="arrow-label">毎晩、役職情報を読み取り</span>
+            </div>
+
+            <!-- 管理画面 → 住民 -->
+            <div class="arch-row-h">
+                <div class="arch-node purple">
+                    <span class="node-icon">🖥️</span>
+                    <span class="node-title">管理画面</span>
+                    <span class="node-sub">LINE公式アカウント<br>マネージャー</span>
+                </div>
+                <div class="arch-arrow-h">
+                    <span class="arrow-label">メッセージ送信</span>
+                    <span class="arrow-line">◀ ─ ─ ─ ▶</span>
+                    <span class="arrow-label">メニュー切替</span>
+                </div>
+                <div class="arch-node blue">
+                    <span class="node-icon">👤</span>
+                    <span class="node-title">住民のLINE</span>
+                    <span class="node-sub">通知・応答を受け取る</span>
+                </div>
+            </div>
+        </div>
+        <!-- /全体連携図 -->
+
+        <details>
+            <summary><strong>LIFFって何？</strong>（タップで開く）</summary>
+            <div style="padding: 12px 0 4px;">
+                <p><strong>LIFF（リフ）</strong>は「LINE Front-end Framework」の略で、<strong>LINEアプリの中でWebページを開く仕組み</strong>です。</p>
+                <p>住民がリッチメニューの「利用登録」をタップすると、LINEの中にフォーム画面が表示されます。別のアプリやブラウザは不要です。</p>
+                <p>「誰がフォームを開いたか」をLINEが自動で判別するため、住民がIDを入力する必要がありません。</p>
+                <p style="font-size:13px; color:var(--gray-light);">※ フォームの実体はGitHub Pages上のHTMLファイルです。変更は今井に相談してください。</p>
+            </div>
+        </details>
+
+        <details>
+            <summary><strong>GASって何？</strong>（タップで開く）</summary>
+            <div style="padding: 12px 0 4px;">
+                <p><strong>GAS（ガス）</strong>は「Google Apps Script」の略で、<strong>スプレッドシートの裏側で動くプログラム</strong>です。</p>
+                <p>以下の処理を自動で実行しています：</p>
+                <ol class="steps">
+                    <li>LIFFフォームから送られてきたデータを受け取る</li>
+                    <li>名簿シートの正しい場所にデータを書き込む</li>
+                    <li>登録完了後、住民のLINEに確認メッセージを送る</li>
+                    <li>定期的に名簿をチェックして、放置された人にリマインドする</li>
+                    <li>毎晩、役職に応じた送信先グループ（オーディエンス）を更新する</li>
+                </ol>
+                <p style="font-size:13px; color:var(--gray-light);">※ スプレッドシートの「拡張機能」→「Apps Script」から確認できますが、直接編集しないでください。</p>
+            </div>
+        </details>
+
+        <details>
+            <summary><strong>用語の説明</strong>（タップで開く）</summary>
+            <div style="padding: 12px 0 4px;">
+                <div class="term-grid">
+                    <div class="term-item"><span class="term-name">LIFF</span> LINEの中でフォームを開く仕組み</div>
+                    <div class="term-item"><span class="term-name">GAS</span> スプレッドシートの裏で動く自動処理プログラム</div>
+                    <div class="term-item"><span class="term-name">トリガー</span> GASを定期的に自動実行する仕組み（タイマー）</div>
+                    <div class="term-item"><span class="term-name">リッチメニュー</span> LINEトーク画面の下に表示されるメニューボタン</div>
+                    <div class="term-item"><span class="term-name">オーディエンス</span> 特定グループにだけ送信するための「送信先リスト」</div>
+                    <div class="term-item"><span class="term-name">GitHub Pages</span> フォームの置き場所（Webページ公開サービス）</div>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <!-- 3 -->
+    <div class="section" id="sec3">
+        <h2>3. 名簿シートの列の意味</h2>
+        <p>列は大きく3つのグループに分かれます。</p>
+
+        <h3>自動で埋まる列（触らなくてOK）</h3>
+        <div class="table-wrap">
+        <table>
+            <thead><tr><th>列</th><th>見出し</th><th>内容</th></tr></thead>
+            <tbody>
+                <tr><td>A</td><td>登録日</td><td>その住民が初めてフォームを開いた日時</td></tr>
+                <tr><td>B</td><td>更新日</td><td>最後に情報を変更・アクセスした日時</td></tr>
+                <tr><td>C</td><td>UserID</td><td>LINE内部のID（住民には見えない識別番号）</td></tr>
+                <tr><td>D</td><td>LINE名</td><td>LINEに設定している表示名</td></tr>
+                <tr><td>E</td><td>ステータス</td><td>登録の状態（→<a href="#sec4">第4章</a>で詳しく説明）</td></tr>
+                <tr><td>F</td><td>ハウスID</td><td>班番号＋戸番の組み合わせ（例: 012-03）</td></tr>
+                <tr><td>I</td><td>地区</td><td>班番号から自動判定（Refシート参照）</td></tr>
+                <tr><td>R</td><td>一般</td><td>YES / 空欄（役職なしの場合YES）</td></tr>
+                <tr><td>S</td><td>環境情報</td><td>住民のスマホ種類など（デバッグ用）</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h3>住民がフォームで入力する列</h3>
+        <div class="table-wrap">
+        <table>
+            <thead><tr><th>列</th><th>見出し</th><th>内容</th></tr></thead>
+            <tbody>
+                <tr><td>G</td><td>姓</td><td>住民が入力した姓</td></tr>
+                <tr><td>H</td><td>名</td><td>住民が入力した名</td></tr>
+                <tr><td>J</td><td>班</td><td>班番号（3桁表記 例: 012）</td></tr>
+                <tr><td>K</td><td>戸番</td><td>戸番（2桁表記 例: 03）</td></tr>
+                <tr><td>L</td><td>年代</td><td>10代以下〜80代以上</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h3>住民がフォームで選択する列</h3>
+        <div class="table-wrap">
+        <table>
+            <thead><tr><th>列</th><th>見出し</th><th>内容</th></tr></thead>
+            <tbody>
+                <tr><td>M</td><td>地区長</td><td>YES / 空欄</td></tr>
+                <tr><td>N</td><td>班長</td><td>YES / 空欄</td></tr>
+                <tr><td>O</td><td>班長（代理）</td><td>YES / 空欄</td></tr>
+                <tr><td>P</td><td>防災部</td><td>YES / 空欄</td></tr>
+                <tr><td>Q</td><td>その他役員</td><td>YES / 空欄</td></tr>
+                <tr><td>T</td><td>DX応援団</td><td>YES / NO</td></tr>
+                <tr><td>U</td><td>その時サポーター</td><td>YES / NO</td></tr>
+                <tr><td>V</td><td>できそうなこと</td><td>その時サポーターのスキル（カンマ区切り）</td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="section" id="sec4">
+        <h2>4. ステータス（E列）の意味</h2>
+        <p>E列は住民の登録状態を表す、<strong>最も重要な列</strong>です。</p>
+
+        <table>
+            <thead><tr><th>ステータス</th><th>意味</th><th>どうなるとこうなる？</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><span class="badge badge-temp">TEMP</span></td>
+                    <td>仮登録（入力途中）</td>
+                    <td>フォームを開いたが、まだ送信していない</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-active">有効</span></td>
+                    <td>登録完了</td>
+                    <td>フォームの入力を最後まで完了して送信した</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-reminded">リマインド済</span></td>
+                    <td>催促メッセージ送信済み</td>
+                    <td>TEMPのまま10分以上放置 → 自動でリマインドされた</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-blocked">ブロック済</span></td>
+                    <td>LINE公式をブロックした</td>
+                    <td>住民がLINE公式アカウントをブロックした</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>ステータスの変化の流れ</h3>
+        <div class="flow-box">フォームを開く → TEMP（仮登録）
+                    ├→ フォーム送信完了 → 有効
+                    └→ 10分以上放置 → リマインド済
+                                        └→ 再度フォームを開いて送信 → 有効
+
+有効 → LINEをブロック → ブロック済
+ブロック済 → ブロック解除（再フォロー） → 有効</div>
+
+        <h3>よくある疑問</h3>
+        <dl class="qa">
+            <dt>Q. 「リマインド済」の人はどうなる？</dt>
+            <dd>LINEに「もう一度やり直してください」というメッセージが届いています。再度フォームを開いて送信すれば「有効」になります。</dd>
+
+            <dt>Q. 「ブロック済」の人がフォームを開いたら？</dt>
+            <dd>「このサービスはご利用いただけません」と表示され、入力はできません。ブロックを解除すれば自動的に「有効」に戻ります。</dd>
+
+            <dt>Q. 「TEMP」のまま残っている人がいるけど大丈夫？</dt>
+            <dd>リマインドメッセージが送られた後「リマインド済」になるはずですが、タイミングによっては一時的にTEMPのまま残ることがあります。</dd>
+        </dl>
+    </div>
+
+    <!-- 5 -->
+    <div class="section" id="sec5">
+        <h2>5. 自動で動いている処理</h2>
+        <p>GAS（プログラム）の中で、タイマーで定期実行されている処理が<strong>2つ</strong>あります。</p>
+
+        <div class="trigger-card green">
+            <h4>1. 放置ユーザーのリマインド</h4>
+            <table>
+                <tbody>
+                    <tr><td style="width:120px;font-weight:bold;">処理名</td><td>checkDropoutUsers</td></tr>
+                    <tr><td style="font-weight:bold;">実行頻度</td><td>数分おき（時限トリガー）</td></tr>
+                    <tr><td style="font-weight:bold;">やること</td><td>TEMP状態で10分以上経過した人に「やり直してください」とLINEメッセージを送る</td></tr>
+                    <tr><td style="font-weight:bold;">ステータス変化</td><td><span class="badge badge-temp">TEMP</span> → <span class="badge badge-reminded">リマインド済</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="trigger-card orange">
+            <h4>2. オーディエンス（送信先グループ）の同期</h4>
+            <table>
+                <tbody>
+                    <tr><td style="width:120px;font-weight:bold;">処理名</td><td>batchSyncAudiences</td></tr>
+                    <tr><td style="font-weight:bold;">実行頻度</td><td>毎日深夜（1日1回）</td></tr>
+                    <tr><td style="font-weight:bold;">やること</td><td>名簿の役職列（M〜Q列, T列）を見て、LINEの送信先グループを最新に更新する</td></tr>
+                    <tr><td style="font-weight:bold;">対象グループ</td><td>地区長 / 班長+代理 / 防災部 / その他役員 / DX応援団</td></tr>
+                </tbody>
+            </table>
+            <p style="margin-top:10px;"><strong>これにより、例えば「班長だけにお知らせを送る」ということがLINEの管理画面からできます。</strong><br>役職の変更があった場合でも、翌日の深夜に自動で反映されます。</p>
+        </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="section" id="sec6">
+        <h2>6. 住民がフォームで操作したときの動き</h2>
+
+        <h3>新規登録の場合</h3>
+        <ol class="steps">
+            <li>LINEでフォームを開く</li>
+            <li>「初回利用登録」画面が表示される</li>
+            <li>名前・班番号・戸番などを入力</li>
+            <li>「この内容で登録する」ボタンを押す</li>
+            <li>名簿に1行追加される（ステータス: <span class="badge badge-active">有効</span>）</li>
+            <li>LINEトークに登録内容の確認メッセージが表示される</li>
+            <li>登録完了のリプライが届く</li>
+        </ol>
+
+        <h3>登録済みの人がフォームを開いた場合</h3>
+        <ol class="steps">
+            <li>LINEでフォームを開く</li>
+            <li>「マイページ」画面が表示される（現在の登録内容が見える）</li>
+            <li>「情報を修正・変更する」ボタンで編集モードに切り替え</li>
+            <li>変更して「この内容で登録する」ボタンを押す</li>
+            <li>名簿の該当行が上書き更新される</li>
+            <li>LINEトークに更新内容の確認メッセージが表示される</li>
+        </ol>
+    </div>
+
+    <!-- 7 -->
+    <div class="section" id="sec7">
+        <h2>7. Refシート（参照用）</h2>
+        <p>班番号 → 地区番号の変換テーブルです。</p>
+        <p>登録時に、住民が入力した班番号からI列（地区）を自動で割り出すために使われます。</p>
+    </div>
+
+    <!-- 8 -->
+    <div class="section" id="sec8">
+        <h2>8. 注意事項</h2>
+        <div class="warn-box">
+            <ul>
+                <li><strong>名簿の行を手動で削除しないでください。</strong><br>GASが行番号で処理しているため、ずれが生じる可能性があります。</li>
+                <li><strong>E列（ステータス）を手動で変更しないでください。</strong><br>自動処理に影響します。</li>
+                <li><strong>C列（UserID）は住民ごとに固有です。</strong><br>この値で住民を識別しているため、変更や重複があると不具合が起きます。</li>
+                <li><strong>列の追加・削除・並び替えは禁止です。</strong><br>GASの処理が壊れます。列構成を変えたい場合はDX委員の今井に相談してください。</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 9 -->
+    <div class="section" id="sec9">
+        <h2>9. エラー通知メールが届いたら</h2>
+        <p>GASでエラーが起きると、Googleから<strong>英語のメール</strong>が届くことがあります。<br>（現在は今井がエラー通知メールを管理しています）</p>
+        <div class="table-wrap">
+        <table class="error-table">
+            <thead><tr><th>メール内容</th><th>意味</th><th>対応</th></tr></thead>
+            <tbody>
+                <tr><td>Error code INTERNAL</td><td>Google側の一時的な障害</td><td>1回だけなら放置でOK。頻発する場合は今井に連絡</td></tr>
+                <tr><td>Exceeded maximum execution time</td><td>処理に時間がかかりすぎた</td><td>名簿のデータ量が増えた可能性。今井に連絡</td></tr>
+                <tr><td>その他のエラー</td><td>プログラム側の問題の可能性</td><td>今井に連絡（メールを転送してください）</td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>関ヶ谷自治会 DX委員会 ｜ 管理: 今井 ｜ この解説書はシステム変更時に自動更新されます</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>バス時刻表機能 運用ガイド - 関ヶ谷自治会</title>
+<style>
+  body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+  h1 { color: #2196F3; border-bottom: 3px solid #2196F3; padding-bottom: 10px; }
+  h2 { color: #1976D2; border-left: 4px solid #2196F3; padding-left: 12px; margin-top: 40px; }
+  h3 { color: #444; }
+  .info-box { background: #E3F2FD; border-radius: 8px; padding: 16px; margin: 16px 0; }
+  .warn-box { background: #FFF3E0; border-radius: 8px; padding: 16px; margin: 16px 0; border-left: 4px solid #FF9800; }
+  .danger-box { background: #FFEBEE; border-radius: 8px; padding: 16px; margin: 16px 0; border-left: 4px solid #F44336; }
+  .step { background: #F5F5F5; border-radius: 8px; padding: 16px; margin: 12px 0; }
+  .step-num { display: inline-block; background: #2196F3; color: white; border-radius: 50%; width: 28px; height: 28px; text-align: center; line-height: 28px; margin-right: 8px; font-weight: bold; }
+  code { background: #F5F5F5; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+  pre { background: #263238; color: #EEFFFF; padding: 16px; border-radius: 8px; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+  th, td { border: 1px solid #DDD; padding: 10px; text-align: left; }
+  th { background: #F5F5F5; }
+  .updated { color: #999; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<h1>バス時刻表機能 運用ガイド</h1>
+<p class="updated">最終更新: 2026年5月</p>
+
+<h2>機能の概要</h2>
+
+<p>住民がLINEのリッチメニュー「バス時刻表」ボタンを押すと、地域のバス時刻表を検索・表示できる機能です。</p>
+
+<div class="info-box">
+<strong>対象路線：</strong> 京浜急行バス 文1・文2系統<br>
+<strong>対象停留所：</strong> 野村住宅センター、西小学校前、中学校前、金沢文庫駅西口、関ヶ谷（最終便のみ）<br>
+<strong>ダイヤ区分：</strong> 平日 / 土休日（祝日は自動判定）
+</div>
+
+<h3>住民が見る画面の流れ</h3>
+<ol>
+  <li>リッチメニュー「バス時刻表」をタップ</li>
+  <li>「どこ行きのバスですか？」→ 金沢文庫駅行き / 野村住宅センター行き を選択</li>
+  <li>「乗るバス停は？」→ バス停を選択</li>
+  <li>時刻表が表示される（次のバス + 午前/午後の全時刻表）</li>
+  <li>「この行き方を保存」で次回からワンタップ表示</li>
+</ol>
+
+<h2>ダイヤ改正時の更新手順</h2>
+
+<div class="warn-box">
+<strong>自動検知について：</strong> 毎週月曜にダイヤ改正チェックが自動実行され、変更の有無がメールで届きます。「変更の可能性あり」のメールが届いたら、以下の手順で更新してください。
+</div>
+
+<h3>手順1：新しい時刻データを確認する</h3>
+
+<div class="step">
+<span class="step-num">1</span> 京急バスの公式時刻表サイトを開く<br>
+<a href="https://transfer-cloud.navitime.biz/keikyubus?feature=sectionTimetable" target="_blank">https://transfer-cloud.navitime.biz/keikyubus</a>
+</div>
+
+<div class="step">
+<span class="step-num">2</span> 各停留所の新しい時刻を確認し、変更点をメモする
+</div>
+
+<h3>手順2：コードの時刻データを更新する</h3>
+
+<div class="step">
+<span class="step-num">3</span> GASエディタ（<a href="https://script.google.com" target="_blank">script.google.com</a>）を開く<br>
+<span style="font-size: 13px; color: #888;">プロジェクト名は「Jichikai_Official_LINE」です。「自分のプロジェクト」に見つからない場合は、左メニューの「すべてのプロジェクト」から探してください。</span>
+</div>
+
+<div class="step">
+<span class="step-num">4</span> <code>ImportBusTimetable.gs</code> ファイルを開く
+</div>
+
+<div class="step">
+<span class="step-num">5</span> ファイル内のJSON時刻データを新しい時刻に修正する<br>
+<br>
+例：野村住宅センターの7時台が変わった場合
+<pre>"7": ["04", "12", "20", "28", "36", "44", "52"]
+↓ 新しい時刻に修正
+"7": ["05", "15", "25", "35", "45", "55"]</pre>
+</div>
+
+<h3>手順3：スプレッドシートを更新する</h3>
+
+<div class="step">
+<span class="step-num">6</span> GASエディタの関数セレクタで <code>importBusTimetable</code> を選択
+</div>
+
+<div class="step">
+<span class="step-num">7</span> 「実行」ボタンを押す → スプレッドシートのデータが更新される
+</div>
+
+<div class="step">
+<span class="step-num">8</span> <a href="https://docs.google.com/spreadsheets/d/1t6h-9Guiu72jVNtaNv28DYplMenyYcK11m_4jll7BGE/edit" target="_blank">バス時刻表スプレッドシート</a>を開いて、データが正しく入っていることを確認
+</div>
+
+<div class="info-box">
+<strong>補足：</strong> スプレッドシートを更新するだけで、LINEの表示は自動的に新しい時刻になります。デプロイの更新は不要です。
+</div>
+
+<h2>自動検知メールの見方</h2>
+
+<h3>変更なしの場合</h3>
+<div class="step">
+件名：<strong>✅ バス時刻表 変更なし - 5/5(月) 09:15</strong><br>
+→ 対応不要です。現在の時刻表が最新であることの確認です。
+</div>
+
+<h3>変更の可能性ありの場合</h3>
+<div class="step">
+件名：<strong>⚠️ バス時刻表 変更の可能性あり - 5/5(月) 09:15</strong><br>
+<br>
+本文に検知内容が記載されます：<br>
+<ul>
+  <li><strong>チェック1（お知らせ）：</strong> 京急バスのお知らせページにダイヤ改正関連のキーワードが見つかった</li>
+  <li><strong>チェック2（時刻表）：</strong> 公式サイトの時刻とスプレッドシートの時刻に差分がある</li>
+</ul>
+→ 京急バスの公式サイトを確認し、必要であれば「ダイヤ改正時の更新手順」に従って更新してください。
+</div>
+
+<h2>トラブルシューティング</h2>
+
+<table>
+<tr><th>症状</th><th>原因</th><th>対処</th></tr>
+<tr>
+  <td>「バス」と送っても反応しない</td>
+  <td>GASのデプロイが古い、または障害</td>
+  <td>GASエディタの「実行数」で最新のdoPostのステータスを確認</td>
+</tr>
+<tr>
+  <td>時刻表が表示されない（スタンプだけ出る）</td>
+  <td>Flex Messageのエラー</td>
+  <td>GASエディタの「実行数」でエラーログを確認</td>
+</tr>
+<tr>
+  <td>祝日なのに平日ダイヤが表示される</td>
+  <td>Googleカレンダーの権限問題</td>
+  <td>GASエディタで <code>testBus</code> を実行し、権限を再承認</td>
+</tr>
+<tr>
+  <td>自動検知メールが届かない</td>
+  <td>トリガーが停止している</td>
+  <td>GASエディタの「トリガー」で <code>checkBusScheduleChanges</code> が設定されているか確認</td>
+</tr>
+<tr>
+  <td>時刻データが間違っている</td>
+  <td>JSONデータの誤り</td>
+  <td>ImportBusTimetable.gs のJSONを修正して <code>importBusTimetable</code> を再実行</td>
+</tr>
+</table>
+
+<h2>停留所・路線情報</h2>
+
+<table>
+<tr><th>停留所</th><th>往路（文庫行き）</th><th>復路（住宅センター行き）</th><th>備考</th></tr>
+<tr><td>関ヶ谷</td><td>-</td><td>-</td><td>平日最終便（22:18着）のみ</td></tr>
+<tr><td>野村住宅センター</td><td>出発</td><td>終点</td><td>復路では選択肢に表示しない</td></tr>
+<tr><td>西小学校前</td><td>途中</td><td>途中</td><td></td></tr>
+<tr><td>中学校前</td><td>途中</td><td>途中</td><td></td></tr>
+<tr><td>金沢文庫駅西口</td><td>終点</td><td>出発</td><td>往路では選択肢に表示しない</td></tr>
+</table>
+
+<div class="info-box">
+<strong>データの保存先：</strong><br>
+時刻表データ → <a href="https://docs.google.com/spreadsheets/d/1t6h-9Guiu72jVNtaNv28DYplMenyYcK11m_4jll7BGE/edit" target="_blank">バス時刻表スプレッドシート</a>（「バス時刻表」シート）<br>
+ユーザーの保存ルート → 同スプレッドシート（「バス設定」シート）
+</div>
+
+</body>
+</html>

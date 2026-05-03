@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE運用ガイド | 関ヶ谷自治会DX委員向け</title>
+    <style>
+        :root {
+            --green: #1DB446;
+            --green-light: #f0faf3;
+            --orange: #E08D3C;
+            --orange-light: #FFF8F0;
+            --red: #e53935;
+            --gray-dark: #333;
+            --gray: #555;
+            --gray-light: #888;
+            --gray-bg: #f4f7f6;
+            --border: #e0e0e0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", -apple-system, sans-serif;
+            background: var(--gray-bg);
+            color: var(--gray-dark);
+            line-height: 1.8;
+            font-size: 15px;
+        }
+        .header {
+            background: #4A6FA5;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 22px; font-weight: bold; margin-bottom: 6px; }
+        .header p { font-size: 13px; opacity: 0.85; }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 16px 60px;
+        }
+
+        /* ナビリンク */
+        .nav-link {
+            display: inline-block;
+            background: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .nav-link a { color: var(--green); text-decoration: none; }
+        .nav-link a:hover { text-decoration: underline; }
+
+        /* 目次 */
+        .toc {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .toc h2 { font-size: 15px; color: #4A6FA5; margin-bottom: 10px; }
+        .toc ol { padding-left: 20px; }
+        .toc li { margin-bottom: 4px; }
+        .toc a { color: #4A6FA5; text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+
+        /* セクション */
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .section h2 {
+            font-size: 18px;
+            color: #4A6FA5;
+            border-left: 4px solid #4A6FA5;
+            padding-left: 12px;
+            margin-bottom: 16px;
+        }
+        .section h3 {
+            font-size: 16px;
+            color: var(--gray-dark);
+            margin: 20px 0 10px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+        .section p { margin-bottom: 12px; color: var(--gray); }
+        .section strong { color: var(--gray-dark); }
+
+        /* テーブル */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 16px;
+            font-size: 14px;
+        }
+        thead th {
+            background: #4A6FA5;
+            color: white;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+        tbody td {
+            padding: 9px 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        tbody tr:nth-child(even) { background: #fafafa; }
+        tbody tr:hover { background: #EEF2F7; }
+        .table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* バッジ */
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .badge-gui { background: #E3F2FD; color: #1565C0; }
+        .badge-gas { background: #E8F5E9; color: #2E7D32; }
+        .badge-both { background: #F3E5F5; color: #7B1FA2; }
+
+        /* 注意ボックス */
+        .warn-box {
+            background: #FFF8E1;
+            border-left: 4px solid #FFA000;
+            padding: 14px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+        .danger-box {
+            background: #FFEBEE;
+            border-left: 4px solid var(--red);
+            padding: 14px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+        .ok-box {
+            background: var(--green-light);
+            border-left: 4px solid var(--green);
+            padding: 14px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+        .warn-box ul, .danger-box ul, .ok-box ul { padding-left: 18px; margin-top: 6px; }
+        .warn-box li, .danger-box li, .ok-box li { margin-bottom: 6px; }
+
+        /* VS比較 */
+        .vs-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 12px 0;
+        }
+        .vs-card {
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .vs-card.gui { border-color: #1565C0; }
+        .vs-card.gas { border-color: #2E7D32; }
+        .vs-card h4 { margin-bottom: 8px; font-size: 15px; }
+        .vs-card.gui h4 { color: #1565C0; }
+        .vs-card.gas h4 { color: #2E7D32; }
+        .vs-card p { font-size: 13px; margin-bottom: 6px; }
+        .vs-card ul { padding-left: 16px; font-size: 13px; }
+        .vs-card li { margin-bottom: 4px; }
+
+        /* Q&A */
+        .qa { margin: 12px 0; }
+        .qa dt {
+            font-weight: bold;
+            color: #4A6FA5;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        .qa dd {
+            margin: 0 0 14px 0;
+            padding-left: 16px;
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        /* ケーススタディ */
+        .case-box {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin: 12px 0;
+            background: #FAFAFA;
+        }
+        .case-box h4 {
+            font-size: 14px;
+            color: var(--red);
+            margin-bottom: 8px;
+        }
+        .case-box .result {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+        .case-box .result strong { color: var(--green); }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: var(--gray-light);
+        }
+
+        @media (max-width: 600px) {
+            .section { padding: 16px; }
+            table { font-size: 13px; }
+            thead th, tbody td { padding: 7px 8px; }
+            .header h1 { font-size: 19px; }
+            .vs-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>LINE公式アカウント 運用ガイド</h1>
+    <p>管理画面とGASの使い分け ｜ DX委員向け ｜ 最終更新: 2026-04-19</p>
+</div>
+
+<div class="container">
+
+    <div class="nav-link">
+        <a href="line-meibo-guide.html">← LINE名簿 解説書に戻る</a>
+    </div>
+
+    <!-- 目次 -->
+    <div class="toc">
+        <h2>もくじ</h2>
+        <ol>
+            <li><a href="#sec1">「管理画面」と「GAS」って何？</a></li>
+            <li><a href="#sec2">機能別：どっちで操作する？</a></li>
+            <li><a href="#sec3">やってはいけないこと</a></li>
+            <li><a href="#sec4">実際に起きた事例</a></li>
+            <li><a href="#sec5">管理画面でやっていいこと</a></li>
+            <li><a href="#sec7">未登録者への案内方法</a></li>
+            <li><a href="#sec6">よくある質問</a></li>
+        </ol>
+    </div>
+
+    <!-- 1 -->
+    <div class="section" id="sec1">
+        <h2>1. 「管理画面」と「GAS」って何？</h2>
+        <p>関ヶ谷自治会のLINE公式アカウントは、<strong>2つの方法</strong>で操作されています。</p>
+
+        <div class="vs-container">
+            <div class="vs-card gui">
+                <h4>管理画面</h4>
+                <p>正式名称：LINE公式アカウントマネージャー</p>
+                <p>ブラウザやアプリで開いて、<strong>手動で操作</strong>する画面です。</p>
+                <ul>
+                    <li>メッセージの配信</li>
+                    <li>あいさつメッセージの編集</li>
+                    <li>友だち数の確認</li>
+                    <li>応答メッセージの設定</li>
+                </ul>
+                <p style="margin-top:8px; font-size:12px; color:#888;">たとえるなら：自分で操作するリモコン</p>
+            </div>
+            <div class="vs-card gas">
+                <h4>自動プログラム（GAS）</h4>
+                <p>Google Apps Script の略</p>
+                <p>スプレッドシートの裏で<strong>自動で動いている</strong>プログラムです。</p>
+                <ul>
+                    <li>登録フォームのデータ受信・書き込み</li>
+                    <li>登録完了メッセージの自動返信</li>
+                    <li>リッチメニューの切り替え</li>
+                    <li>オーディエンスの毎晩同期</li>
+                </ul>
+                <p style="margin-top:8px; font-size:12px; color:#888;">たとえるなら：裏で働いている事務員さん</p>
+            </div>
+        </div>
+
+        <div class="warn-box">
+            <strong>大事なポイント：</strong>この2つは<strong>同じLINEアカウントを別々の方法で操作</strong>しています。そのため、管理画面で設定を変えると、GASの自動処理と競合（ぶつかり合い）することがあります。
+        </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="section" id="sec2">
+        <h2>2. 機能別：どっちで操作する？</h2>
+        <p>各機能について「どちらで操作するか」を一覧にしました。</p>
+
+        <div class="table-wrap">
+        <table>
+            <thead><tr><th>機能</th><th>操作する場所</th><th>説明</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><strong>メッセージ一斉配信</strong></td>
+                    <td><span class="badge badge-gui">管理画面</span></td>
+                    <td>お知らせや案内の配信。オーディエンスを指定して特定グループにも送れる</td>
+                </tr>
+                <tr>
+                    <td><strong>あいさつメッセージ</strong></td>
+                    <td><span class="badge badge-gui">管理画面</span></td>
+                    <td>友だち追加時に自動送信されるメッセージ。管理画面で編集してOK</td>
+                </tr>
+                <tr>
+                    <td><strong>応答メッセージ</strong></td>
+                    <td><span class="badge badge-both">要注意</span></td>
+                    <td>★「一律返信」は使用禁止。キーワード設定のみ使用可（→<a href="#sec3">第3章</a>）</td>
+                </tr>
+                <tr>
+                    <td><strong>登録フォームの処理</strong></td>
+                    <td><span class="badge badge-gas">GAS</span></td>
+                    <td>LIFFフォームからのデータ受信・名簿への書き込み。自動処理のため触らない</td>
+                </tr>
+                <tr>
+                    <td><strong>登録完了の返信</strong></td>
+                    <td><span class="badge badge-gas">GAS</span></td>
+                    <td>「利用登録を完了しました！」等の自動返信。GASが処理している</td>
+                </tr>
+                <tr>
+                    <td><strong>リッチメニュー</strong></td>
+                    <td><span class="badge" style="background:#FFF3E0;color:#E65100;">未定</span></td>
+                    <td>現在、管理方法を検討中です。決まり次第更新します。変更する場合は今井に確認してください</td>
+                </tr>
+                <tr>
+                    <td><strong>オーディエンス<br>（送信先グループ）</strong></td>
+                    <td><span class="badge badge-gas">GAS</span></td>
+                    <td>毎晩、名簿の役職情報から自動で作り直している。手動で削除しない</td>
+                </tr>
+                <tr>
+                    <td><strong>友だち数・統計</strong></td>
+                    <td><span class="badge badge-gui">管理画面</span></td>
+                    <td>確認するだけなので自由に見てOK</td>
+                </tr>
+                <tr>
+                    <td><strong>放置ユーザーのリマインド</strong></td>
+                    <td><span class="badge badge-gas">GAS</span></td>
+                    <td>数分おきに自動チェック。登録途中で放置した人にメッセージを送る</td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
+
+        <div class="ok-box">
+            <strong>迷ったときの判断基準：</strong><br>
+            管理画面で操作していいのは「<strong>自分の目で確認して、手動で送る・編集するもの</strong>」だけです。<br>
+            「自動で動いている機能」は管理画面から触らないでください。
+        </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="section" id="sec3">
+        <h2>3. やってはいけないこと</h2>
+
+        <div class="danger-box">
+            <strong>以下の操作は、GASの自動処理と競合して不具合の原因になります。</strong>
+            <ul>
+                <li><strong>応答メッセージの「一律返信」をONにしない</strong><br>
+                    GASが登録完了メッセージを送る仕組みと競合します。住民に二重でメッセージが届いたり、GAS側の処理が妨害されることがあります。<br>
+                    応答メッセージを使う場合は、必ず<strong>キーワード設定</strong>で絞り込んでください。</li>
+                <li><strong>リッチメニューの管理方法は現在検討中です。</strong><br>
+                    変更したい場合は今井に相談してください。</li>
+                <li><strong>「[AUTO]」で始まるオーディエンスを削除しない</strong><br>
+                    「[AUTO] 地区長」「[AUTO] 班長」などはGASが毎晩自動で作り直しています。手動で消すとエラーの原因になります。</li>
+            </ul>
+        </div>
+
+        <h3>応答メッセージで使用中のキーワード</h3>
+        <p>現在、フォーム登録で以下のキーワードが使われています。応答メッセージのキーワードを新しく設定する際は、<strong>これらと被らないように</strong>注意してください。</p>
+        <div class="table-wrap">
+        <table>
+            <thead><tr><th>使用中のキーワード</th><th>用途</th></tr></thead>
+            <tbody>
+                <tr><td>班</td><td>フォーム登録時の自動処理で使用</td></tr>
+                <tr><td>班長</td><td>同上</td></tr>
+                <tr><td>地区長</td><td>同上</td></tr>
+                <tr><td>防災部</td><td>同上</td></tr>
+                <tr><td>【新規登録】</td><td>GASが登録完了リプライを返すトリガー</td></tr>
+                <tr><td>【情報更新】</td><td>GASが更新完了リプライを返すトリガー</td></tr>
+                <tr><td>新規利用登録フォーム</td><td>未登録者へフォームURLを案内する応答メッセージ（実装済み）</td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="section" id="sec4">
+        <h2>4. 実際に起きた事例</h2>
+
+        <div class="case-box">
+            <h4>事例：一律自動返信をONにしてしまった</h4>
+            <p><strong>何が起きた：</strong><br>
+            管理画面 ＞ 応答メッセージ ＞「一律返信」をONにした状態で、住民がフォーム登録を完了した。</p>
+            <p><strong>結果：</strong><br>
+            住民のLINEに「登録完了メッセージ（GAS）」と「一律返信メッセージ（管理画面）」の2通が届いた。住民が混乱した。</p>
+            <div class="result">
+                <strong>対処：</strong>一律返信をOFFにし、キーワード設定に切り替えた。<br>
+                <strong>ルール：</strong>応答メッセージを使う場合は、必ずキーワードで絞り込む。
+            </div>
+        </div>
+
+        <p style="font-size:13px; color:var(--gray-light);">※ 今後、新たな事例が発生した場合はここに追記します。</p>
+    </div>
+
+    <!-- 5 -->
+    <div class="section" id="sec5">
+        <h2>5. 管理画面でやっていいこと</h2>
+        <p>以下の操作は管理画面から自由に行ってOKです。</p>
+
+        <div class="ok-box">
+            <ul>
+                <li><strong>メッセージの一斉配信</strong>（お知らせ、イベント案内など）</li>
+                <li><strong>オーディエンスを「選んで」配信</strong>（グループの作成・削除はNG。選んで送るだけ）</li>
+                <li><strong>あいさつメッセージの編集</strong></li>
+                <li><strong>応答メッセージの追加</strong>（キーワード設定のみ。一律返信はNG）</li>
+                <li><strong>友だち数や統計の確認</strong></li>
+                <li><strong>チャット（1対1トーク）での返信</strong></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="section" id="sec7">
+        <h2>7. 未登録者への案内方法</h2>
+        <p>LINE友だち登録済みだが、自治会員登録フォームが<strong>未登録</strong>の方への案内方法です。</p>
+
+        <h3>対策1：リッチメニューで案内する（推奨）</h3>
+        <p>フォーム未登録の方には、通常メニューとは別の<strong>「登録してくださいメニュー」</strong>を表示しておきます。</p>
+        <p>リッチメニューは、登録者の状況に応じて運営側から個別に指定できます。</p>
+        <div class="warn-box">
+            <strong>注意：</strong>リッチメニューの切り替えは<strong>GAS（自動プログラム）経由でのみ</strong>操作できます。管理画面からは個別の切り替えはできません。
+        </div>
+
+        <h3>対策2：メッセージで案内する</h3>
+        <p>管理画面からメッセージを配信し、登録フォームのURLを案内して登録を促します。</p>
+
+        <h3>対策3：キーワード応答メッセージで案内する（実装済み）</h3>
+        <p>管理画面の応答メッセージで、キーワード<strong>「新規利用登録フォーム」</strong>に反応して登録フォームのURLを返す自動応答を設定済みです。</p>
+        <p>住民がトーク画面で「新規利用登録フォーム」と送信すると、フォームへのリンクが自動で届きます。</p>
+
+        <h3>紙での案内はできません</h3>
+        <div class="danger-box">
+            <strong>紙のチラシやQRコードでフォームURLを案内する方法は使えません。</strong>
+            <p style="margin-top:8px;">理由：登録フォーム（LIFF）は、<strong>住民がLINEアプリ内で関ヶ谷自治会の公式アカウントを開いている状態</strong>でないと正しく動きません。</p>
+            <p>フォーム送信後、住民のLINEトークに確認メッセージを自動返信する仕組みになっており、LINEアプリの外（ブラウザなど）からフォームを開くとエラーが発生します。</p>
+            <p style="margin-top:8px;"><strong>まとめ：</strong>紙で案内 → ブラウザで開いてしまう → エラー → 住民が混乱。<br>そのため、<strong>対策1・2・3のLINE内での案内のみ</strong>で対処してください。</p>
+        </div>
+    </div>
+
+    <!-- 8 -->
+    <div class="section" id="sec6">
+        <h2>8. よくある質問</h2>
+        <dl class="qa">
+            <dt>Q. 管理画面とGASで設定が矛盾したらどうなる？</dt>
+            <dd>GASの自動処理が正しく動かなくなる場合があります。管理画面で何か変更する前に「これはGASと関係ある機能か？」を上の一覧表で確認してください。判断に迷ったら今井に相談してください。</dd>
+
+            <dt>Q. 「[AUTO]」のオーディエンスが管理画面に見えるけど、使っていいの？</dt>
+            <dd>配信先として<strong>選んで使うのはOK</strong>です。ただし、中身の編集や削除はしないでください。毎晩GASが自動で最新に更新しています。</dd>
+
+            <dt>Q. キーワード応答を新しく追加したいときは？</dt>
+            <dd>追加自体はOKですが、既に使われているキーワード（「【新規登録】」「【情報更新】」など）と被らないようにしてください。不安なら今井に確認してから追加してください。</dd>
+
+            <dt>Q. リッチメニューのデザインを変えたいときは？</dt>
+            <dd>リッチメニューの管理方法は現在検討中です。変更したい場合は今井に相談してください。</dd>
+
+            <dt>Q. GASが止まっているかもしれない。どう確認する？</dt>
+            <dd>スプレッドシートの上部メニュー「拡張機能」→「Apps Script」→ 左メニューの「実行数」で最近のログが確認できます。エラーが出ている場合は今井に連絡してください。</dd>
+        </dl>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>関ヶ谷自治会 DX委員会 ｜ 管理: 今井 ｜ この運用ガイドはシステム変更時に自動更新されます</p>
+</div>
+
+</body>
+</html>
