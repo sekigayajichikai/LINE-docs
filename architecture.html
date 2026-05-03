@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>システム構成ドキュメント - 関ヶ谷自治会</title>
+<style>
+  body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
+  h1 { color: #2196F3; border-bottom: 3px solid #2196F3; padding-bottom: 10px; }
+  h2 { color: #1976D2; border-left: 4px solid #2196F3; padding-left: 12px; margin-top: 40px; }
+  h3 { color: #444; margin-top: 28px; }
+  .info-box { background: #E3F2FD; border-radius: 8px; padding: 16px; margin: 16px 0; }
+  .warn-box { background: #FFF3E0; border-radius: 8px; padding: 16px; margin: 16px 0; border-left: 4px solid #FF9800; }
+  .flow-box { background: #F5F5F5; border-radius: 8px; padding: 16px; margin: 16px 0; font-family: monospace; white-space: pre-line; line-height: 1.6; }
+  code { background: #F5F5F5; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+  th, td { border: 1px solid #DDD; padding: 10px; text-align: left; }
+  th { background: #F5F5F5; }
+  .func { color: #1565C0; }
+  .file-section { background: #FAFAFA; border: 1px solid #EEE; border-radius: 8px; padding: 16px; margin: 12px 0; }
+  .file-section h3 { margin-top: 0; }
+  ul { padding-left: 20px; }
+  li { margin: 4px 0; }
+  .updated { color: #999; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<h1>システム構成ドキュメント</h1>
+<p class="updated">最終更新: 2026年5月</p>
+
+<h2>全体構成</h2>
+
+<div class="flow-box">
+住民のスマホ（LINE）
+  ├── トーク画面・リッチメニュー
+  │     ↓ メッセージ送信・ボタンタップ
+  │   LINE Messaging API
+  │     ↓ Webhook POST
+  │   Google Apps Script（Webアプリ）
+  │     ├── Registration.js（登録・名簿管理）
+  │     ├── BusTimetable.js（バス時刻表）
+  │     └── BusScheduleChecker.js（ダイヤ監視）
+  │     ↓ 読み書き
+  │   Google スプレッドシート
+  │     ├── 名簿シート
+  │     ├── バス時刻表シート
+  │     └── バス設定シート
+  │
+  └── LIFFフォーム → index.html（登録・マイページ）
+</div>
+
+<h2>メッセージ処理フロー</h2>
+
+<h3>doPost の処理順序</h3>
+<p>LINEからリクエストが届くと、<code>doPost()</code>が呼ばれ、内容に応じて振り分けます。</p>
+
+<div class="flow-box">
+LINEからリクエスト到着
+  ↓
+doPost() が受け取る
+  ↓
+何のリクエスト？
+  ├── マイページ情報取得 → ユーザー情報を返す
+  ├── テキストメッセージ
+  │     ├── 「バス」「マイバス」等 → バス時刻表処理
+  │     └── 「【新規登録】」「【情報更新】」→ 登録完了リプライ
+  ├── ボタン操作（postback）→ バスのボタン操作を処理
+  ├── ブロック（unfollow）→ ステータスを「ブロック済」に更新
+  ├── 仮登録（LIFFから）→ 名簿に仮保存
+  └── 本登録（LIFFから）→ 名簿に全情報を書き込み
+</div>
+
+<h3>バス時刻表の処理フロー</h3>
+
+<div class="flow-box">
+「バス」テキスト受信
+  ↓
+保存件数を確認
+  ├── 0件 → 「どこ行きのバスですか？」方向選択を返信
+  └── 1件以上 → 1件目の時刻表をすぐ返信
+
+方向を選択（金沢文庫駅行き / 野村住宅センター行き）
+  ↓
+バス停を選択
+  ↓
+時刻表カルーセルを返信
+  ├── 1枚目: 次のバス（あと何分）+ ボタン
+  ├── 2枚目: 午前の時刻表
+  └── 3枚目: 午後の時刻表
+
+フッターボタン:
+  ├── ダイヤ切替（平日⇔土休日）
+  ├── 他の時刻表を見る
+  ├── この行き方を保存（未保存時のみ）
+  └── マイバス管理（保存済み時のみ）
+</div>
+
+<div class="warn-box">
+<strong>設計方針:</strong> 全ての返信はReply APIを使用。Push APIは使用禁止（メッセージ枠消費を防止）。時刻表データはCacheServiceでキャッシュ（6時間）し、高速応答を実現。
+</div>
+
+<h2>ファイル詳細</h2>
+
+<div class="info-box">
+<strong>用語：</strong><br>
+<strong>ファイル（.js / .gs）</strong> — プログラムのコードが書かれたテキストファイル。GASエディタでは .gs と表示される<br>
+<strong>関数（function）</strong> — ファイルの中にある「ひとつの処理のまとまり」。GASエディタの関数セレクタから選んで実行できる<br>
+例：Registration.js というファイルの中に doPost() や saveTempUser() といった関数が入っている
+</div>
+
+<div class="file-section">
+<h3>Registration.js — ユーザー登録・名簿管理</h3>
+<p>LINEからの全リクエストを最初に受け取るファイル。</p>
+<ul>
+  <li><span class="func">doGet(e)</span> — ブラウザからの直接アクセスに応答</li>
+  <li><span class="func">doPost(e)</span> — LINEからのリクエストを受け取って振り分ける（最初に呼ばれる関数）</li>
+  <li><span class="func">saveTempUser()</span> — LIFFフォームからの仮登録を名簿に保存</li>
+  <li><span class="func">updateFullUserInfo()</span> — 本登録。名簿に全情報を書き込む</li>
+  <li><span class="func">checkDropoutUsers()</span> — 登録途中で離脱した人にリマインドを送る（定期実行）</li>
+  <li><span class="func">updateBlockStatus()</span> — ユーザーがBotをブロックしたらステータスを更新</li>
+  <li><span class="func">linkRichMenuToUser()</span> — 登録完了後にリッチメニューを紐付ける</li>
+  <li><span class="func">sendPushMessage()</span> — 管理者への通知用。住民への返信には使わない</li>
+</ul>
+</div>
+
+<div class="file-section">
+<h3>BusTimetable.js — バス時刻表の全機能</h3>
+<p>バス時刻表の検索・表示・保存に関する全処理。</p>
+<ul>
+  <li><span class="func">handleBusMessage(event)</span> — 「バス」「マイバス」等のテキストを判定して処理</li>
+  <li><span class="func">handleBusPostback(event)</span> — ボタンが押されたときの処理（方向選択、停留所選択等）</li>
+  <li><span class="func">getTimetableData_()</span> — スプレッドシートから時刻表データを読み込む（6時間キャッシュ）</li>
+  <li><span class="func">getStopNames()</span> — 停留所の名前リストを取得する</li>
+  <li><span class="func">getBusTimetable()</span> — 指定した停留所・曜日の時刻一覧を返す</li>
+  <li><span class="func">getDayType(date)</span> — 今日が平日か土休日かを判定する（祝日も考慮）</li>
+  <li><span class="func">buildTimetableFlex()</span> — 時刻表カルーセル（次のバス＋午前＋午後）を組み立てる</li>
+  <li><span class="func">buildDirectionSelectFlex()</span> — 「どこ行きのバスですか？」画面を組み立てる</li>
+  <li><span class="func">buildStopSelectFlex()</span> — 「乗るバス停は？」画面を組み立てる</li>
+  <li><span class="func">buildSettingsListFlex()</span> — マイバス管理画面（保存済み一覧）を組み立てる</li>
+  <li><span class="func">getUserBusSettings()</span> — ユーザーの保存済みルートを取得する</li>
+  <li><span class="func">saveUserBusSetting()</span> — ルートを保存する</li>
+  <li><span class="func">deleteUserBusSetting()</span> — ルートを削除する</li>
+  <li><span class="func">renameUserBusSetting()</span> — ルートの名前を変更する</li>
+  <li><span class="func">busReplyFlex()</span> — カード型の画面をLINEに返信する</li>
+  <li><span class="func">busReplyText()</span> — テキストメッセージをLINEに返信する</li>
+</ul>
+</div>
+
+<div class="file-section">
+<h3>BusScheduleChecker.js — ダイヤ改正の自動検知</h3>
+<p>毎週月曜に自動実行し、バスのダイヤが変わっていないかチェックする。</p>
+<ul>
+  <li><span class="func">checkBusScheduleChanges()</span> — チェックを実行してメールで結果を送る（トリガーで実行）</li>
+  <li><span class="func">checkKeikyuNews_()</span> — 京急バスのお知らせページに「ダイヤ改正」等のキーワードがあるか確認</li>
+  <li><span class="func">checkTimetableData_()</span> — 公式サイトの時刻とスプレッドシートの時刻を比較する</li>
+  <li><span class="func">fetchOfficialTimes_()</span> — 京急バス公式サイトから時刻データを取得する</li>
+  <li><span class="func">testBusScheduleChecker()</span> — 手動でチェックを試すテスト用</li>
+</ul>
+</div>
+
+<div class="file-section">
+<h3>ImportBusTimetable.js — 時刻表データの投入</h3>
+<p>ダイヤ改正時に使う。JSON形式の時刻データをスプレッドシートに書き込む。</p>
+<ul>
+  <li><span class="func">importBusTimetable()</span> — スプレッドシートをクリアしてJSONからデータを投入する</li>
+  <li>ファイル内に全停留所の時刻データがJSON形式で入っている</li>
+</ul>
+</div>
+
+<div class="file-section">
+<h3>AudienceManager.js — オーディエンス自動同期</h3>
+<p>名簿の役職に基づいてLINEのオーディエンス（配信グループ）を自動更新する。</p>
+<ul>
+  <li><span class="func">batchSyncAudiences()</span> — 全オーディエンスを一括同期する（毎晩定期実行）</li>
+</ul>
+</div>
+
+<div class="file-section">
+<h3>FriendsListUpdater.js — 友だちリスト更新</h3>
+<p>LINEの友だち全員のリストを取得してスプレッドシートに保存する。</p>
+<ul>
+  <li><span class="func">updateFriendsList()</span> — 友だちリストを更新する（定期実行）</li>
+</ul>
+</div>
+
+<div class="file-section">
+<h3>RichMenuCreator.js — リッチメニュー作成</h3>
+<p>LINEのトーク画面下部に表示されるメニューを作成・更新する。</p>
+<ul>
+  <li><span class="func">createRichMenu()</span> — リッチメニューを新規作成する</li>
+</ul>
+</div>
+
+<div class="file-section">
+<h3>RepairShiftedRows.js — データ修復</h3>
+<p>名簿データの列ずれを検出・修復するユーティリティ。</p>
+<ul>
+  <li><span class="func">repairShiftedRows()</span> — ずれた行を修復する</li>
+  <li><span class="func">dryRunRepairShiftedRows()</span> — 修復せずにずれた行を確認だけする</li>
+</ul>
+</div>
+
+<div class="file-section">
+<h3>RichMenuIDChcecker.js — リッチメニューID確認</h3>
+<p>現在設定されているリッチメニューのIDを確認する。</p>
+<ul>
+  <li><span class="func">checkAllRichMenus()</span> — 全リッチメニュー一覧を表示</li>
+</ul>
+</div>
+
+<div class="file-section">
+<h3>allusers.js — 全ユーザー名取得</h3>
+<ul>
+  <li><span class="func">getAllUserNames()</span> — 全ユーザーの名前を取得する</li>
+</ul>
+</div>
+
+<div class="file-section">
+<h3>test.js — テスト用</h3>
+<p>GASエディタから手動実行してデバッグに使う。</p>
+<ul>
+  <li><span class="func">testResponseTimes()</span> — 各工程の処理速度を計測する</li>
+  <li><span class="func">testBus()</span> — バス機能の基本動作テスト（停留所・曜日判定・時刻取得）</li>
+  <li><span class="func">testPost()</span> — doPostのテスト用</li>
+</ul>
+</div>
+
+<h2>環境情報</h2>
+
+<h3>GASプロジェクト</h3>
+<table>
+<tr><th>環境</th><th>プロジェクト名</th></tr>
+<tr><td>本番</td><td>Jichikai_Official_LINE</td></tr>
+<tr><td>テスト</td><td>LINE_meibo_Test</td></tr>
+</table>
+
+<h3>スプレッドシート</h3>
+<table>
+<tr><th>用途</th><th>説明</th></tr>
+<tr><td>名簿（本番）</td><td>全住民のユーザー情報</td></tr>
+<tr><td>名簿（テスト）</td><td>テスト用名簿</td></tr>
+<tr><td>バス時刻表・設定</td><td>時刻表データ + ユーザーの保存ルート</td></tr>
+</table>
+
+<h3>GASトリガー（自動実行）</h3>
+<table>
+<tr><th>関数</th><th>頻度</th><th>内容</th></tr>
+<tr><td>checkDropoutUsers</td><td>数分おき</td><td>仮登録放置者へのリマインド</td></tr>
+<tr><td>checkBusScheduleChanges</td><td>週1回（月曜）</td><td>ダイヤ改正検知メール</td></tr>
+<tr><td>batchSyncAudiences</td><td>毎晩</td><td>オーディエンス同期</td></tr>
+</table>
+
+<h2>セキュリティ考慮事項</h2>
+<ul>
+  <li><strong>ACCESS_TOKEN</strong>: Registration.js にハードコード。GASプロジェクトのアクセス権限で保護</li>
+  <li><strong>LINE UserID</strong>: スプレッドシートに保存。スプレッドシートの共有設定で管理</li>
+  <li><strong>GitHubリポジトリ</strong>: Private設定。ACCESS_TOKENを含むため公開禁止</li>
+</ul>
+
+</body>
+</html>
