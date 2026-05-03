@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>システム構成ドキュメント - 関ヶ谷自治会</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true, theme:'default'});</script>
 <style>
   body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
   h1 { color: #2196F3; border-bottom: 3px solid #2196F3; padding-bottom: 10px; }
@@ -31,70 +33,78 @@
 
 <h2>全体構成</h2>
 
-<div class="flow-box">
-住民のスマホ（LINE）
-  ├── トーク画面・リッチメニュー
-  │     ↓ メッセージ送信・ボタンタップ
-  │   LINE Messaging API
-  │     ↓ Webhook POST
-  │   Google Apps Script（Webアプリ）
-  │     ├── Registration.js（登録・名簿管理）
-  │     ├── BusTimetable.js（バス時刻表）
-  │     └── BusScheduleChecker.js（ダイヤ監視）
-  │     ↓ 読み書き
-  │   Google スプレッドシート
-  │     ├── 名簿シート
-  │     ├── バス時刻表シート
-  │     └── バス設定シート
-  │
-  └── LIFFフォーム → index.html（登録・マイページ）
-</div>
+<pre class="mermaid">
+graph TD
+    subgraph phone["住民のスマホ（LINE）"]
+        A1[トーク画面]
+        A2[リッチメニュー]
+        A3[LIFFフォーム]
+    end
+
+    subgraph lineapi["LINE Messaging API"]
+        B1[Webhook]
+        B2[Reply API]
+    end
+
+    subgraph gas["Google Apps Script"]
+        C1[Registration.js<br/>登録・名簿管理]
+        C2[BusTimetable.js<br/>バス時刻表]
+        C3[BusScheduleChecker.js<br/>ダイヤ監視]
+    end
+
+    subgraph sheets["Google スプレッドシート"]
+        D1[名簿シート]
+        D2[バス時刻表シート]
+        D3[バス設定シート]
+    end
+
+    A1 & A2 -->|メッセージ・タップ| lineapi
+    A3 -->|フォーム送信| gas
+    lineapi -->|Webhook POST| gas
+    gas -->|Reply| lineapi
+    gas -->|読み書き| sheets
+</pre>
 
 <h2>メッセージ処理フロー</h2>
 
 <h3>doPost の処理順序</h3>
 <p>LINEからリクエストが届くと、<code>doPost()</code>が呼ばれ、内容に応じて振り分けます。</p>
 
-<div class="flow-box">
-LINEからリクエスト到着
-  ↓
-doPost() が受け取る
-  ↓
-何のリクエスト？
-  ├── マイページ情報取得 → ユーザー情報を返す
-  ├── テキストメッセージ
-  │     ├── 「バス」「マイバス」等 → バス時刻表処理
-  │     └── 「【新規登録】」「【情報更新】」→ 登録完了リプライ
-  ├── ボタン操作（postback）→ バスのボタン操作を処理
-  ├── ブロック（unfollow）→ ステータスを「ブロック済」に更新
-  ├── 仮登録（LIFFから）→ 名簿に仮保存
-  └── 本登録（LIFFから）→ 名簿に全情報を書き込み
-</div>
+<pre class="mermaid">
+flowchart TD
+    W[LINE Webhook] --> DP[doPost]
+    DP --> Q1{何のリクエスト？}
+    Q1 -->|マイページ情報取得| R1[ユーザー情報を返す]
+    Q1 -->|テキストメッセージ| Q2{内容は？}
+    Q2 -->|バス・マイバス等| R2[バス時刻表処理]
+    Q2 -->|新規登録・情報更新| R3[登録完了リプライ]
+    Q1 -->|ボタン操作| R4[バスのボタン操作を処理]
+    Q1 -->|ブロック| R5[ステータスを更新]
+    Q1 -->|仮登録| R6[名簿に仮保存]
+    Q1 -->|本登録| R7[名簿に全情報を書き込み]
+</pre>
 
 <h3>バス時刻表の処理フロー</h3>
 
-<div class="flow-box">
-「バス」テキスト受信
-  ↓
-保存件数を確認
-  ├── 0件 → 「どこ行きのバスですか？」方向選択を返信
-  └── 1件以上 → 1件目の時刻表をすぐ返信
+<pre class="mermaid">
+flowchart TD
+    BUS["「バス」テキスト受信"] --> CHK{保存件数?}
+    CHK -->|0件| DIR[方向選択を返信]
+    CHK -->|1件以上| TT1[1件目の時刻表を即返信]
 
-方向を選択（金沢文庫駅行き / 野村住宅センター行き）
-  ↓
-バス停を選択
-  ↓
-時刻表カルーセルを返信
-  ├── 1枚目: 次のバス（あと何分）+ ボタン
-  ├── 2枚目: 午前の時刻表
-  └── 3枚目: 午後の時刻表
+    DIR --> STOP[バス停を選択]
+    STOP --> CAR[時刻表カルーセルを返信]
+    TT1 --> CAR
 
-フッターボタン:
-  ├── ダイヤ切替（平日⇔土休日）
-  ├── 他の時刻表を見る
-  ├── この行き方を保存（未保存時のみ）
-  └── マイバス管理（保存済み時のみ）
-</div>
+    CAR --> C1["1枚目: 次のバス（あと何分）"]
+    CAR --> C2["2枚目: 午前の時刻表"]
+    CAR --> C3["3枚目: 午後の時刻表"]
+
+    C1 --> F1[ダイヤ切替]
+    C1 --> F2[他の時刻表を見る]
+    C1 --> F3[この行き方を保存]
+    C1 --> F4[マイバス管理]
+</pre>
 
 <div class="warn-box">
 <strong>設計方針:</strong> 全ての返信はReply APIを使用。Push APIは使用禁止（メッセージ枠消費を防止）。時刻表データはCacheServiceでキャッシュ（6時間）し、高速応答を実現。
