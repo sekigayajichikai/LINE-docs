@@ -722,6 +722,28 @@
                 </tbody>
             </table>
             <p style="margin-top:10px;"><strong>これにより、例えば「班長だけにお知らせを送る」ということがLINEの管理画面からできます。</strong><br>役職の変更があった場合でも、翌日の深夜に自動で反映されます。</p>
+            <p style="margin-top:8px; color: #888; font-size: 14px;">関連ファイル: AudienceManager.js の <code>batchSyncAudiences()</code></p>
+        </div>
+
+        <div class="trigger-card orange">
+            <h4>3. オーディエンスの手動作成ツール</h4>
+            <p>上の自動同期とは別に、<strong>任意のシートからカスタムのオーディエンスを作る</strong>こともできます。例えば「イベント参加者だけに送る」といった一時的なグループを作りたいときに使います。</p>
+            <table>
+                <tbody>
+                    <tr><td style="width:120px;font-weight:bold;">処理名</td><td>ManualAudienceCreator.js</td></tr>
+                    <tr><td style="font-weight:bold;">実行方法</td><td>GASエディタから手動実行（自動ではない）</td></tr>
+                    <tr><td style="font-weight:bold;">やること</td><td>指定したシートのA列にあるUserIDリストからオーディエンスを作成</td></tr>
+                </tbody>
+            </table>
+            <p style="margin-top:10px;"><strong>使い方:</strong></p>
+            <ol style="margin-top:5px; padding-left:20px;">
+                <li>GASエディタで <code>setupAudienceSheet()</code> を1回実行（初回のみ）</li>
+                <li>スプレッドシートに「オーディエンス作成」シートが作られる</li>
+                <li>B8セルに対象シート名を入力</li>
+                <li><code>onClickCreateAudience()</code> を実行</li>
+                <li>確認ダイアログで「はい」→ オーディエンスが作成される</li>
+            </ol>
+            <p style="margin-top:8px; color: #888; font-size: 14px;">関連ファイル: ManualAudienceCreator.js の <code>createAudience()</code></p>
         </div>
     </div>
 
